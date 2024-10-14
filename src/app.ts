@@ -4,6 +4,7 @@ import router from './routes/Router';
 import sequelize from './config/Database';
 import { json, urlencoded } from 'body-parser';
 import { connect as connectRedis } from './config/Redis';
+import projectRouter from './routes/ProjectRouter';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(json());
 app.use(urlencoded({ extended: true }));
 
 app.use('/api/auth', router);
+app.use('/api/project', projectRouter);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('API is running!');

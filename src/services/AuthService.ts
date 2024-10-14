@@ -165,7 +165,7 @@ export class AuthService implements IAuthService {
 
         const token = jwt.sign(payload, secret, { expiresIn: '30m' });
 
-        await redisClient.set(`token:${user.username}`, token, {
+        await redisClient.SET(`${user.username}`, token.toString(), {
             EX: 30 * 60,
         });
 
