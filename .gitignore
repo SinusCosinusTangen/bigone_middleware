@@ -36,3 +36,6 @@ temp/
 # Redis data
 *.rdb
 *.aof
+
+# Local keys
+keys/
