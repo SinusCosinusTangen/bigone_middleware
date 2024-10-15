@@ -65,6 +65,7 @@ class ProjectController {
             res.status(response.status).json(response.data);
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
+                console.log(error);
                 res.status(error.response.status).json(error.response.data);
             } else {
                 console.log(error);

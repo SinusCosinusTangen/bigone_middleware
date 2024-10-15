@@ -10,5 +10,6 @@ router.post('/register', AuthController.registerUser.bind(AuthController));     
 router.post('/login', AuthController.loginUser.bind(AuthController));                   // POST: /api/auth/login
 router.put('/update-user', AuthController.updateUser.bind(AuthController));             // PUT: /api/auth/update-user
 router.post('/validate', AuthController.validateUser.bind(AuthController));             // POST: /api/auth/validate
+router.post('/logout', AuthController.logoutUser.bind(AuthController));                 // POST: /api/auth/logout
 
 export default router;

@@ -165,7 +165,7 @@ export class AuthService implements IAuthService {
 
         const token = jwt.sign(payload, secret, { expiresIn: '30m' });
 
-        await redisClient.SET(`${user.username}`, token.toString(), {
+        await redisClient.SET(`${user.username}:${user.role}`, token.toString(), {
             EX: 30 * 60,
         });
 
@@ -173,15 +173,45 @@ export class AuthService implements IAuthService {
     }
 
     public async validateToken(userDTO: UserDTO): Promise<UserDTO> {
-        const token = await redisClient.get(`token:${userDTO.username}`);
+        const user = await this.findUserByUsername(userDTO.username);
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        const token = await redisClient.get(`${user.username}:${user.role}`);
 
         if (userDTO.token === token) {
+            userDTO.role = user.role;
             userDTO.token = await this.generateJwtToken(userDTO);
             return userDTO;
         }
 
         userDTO.token = "EXPIRED";
         return userDTO;
+    }
+
+    public async logoutUser(userDTO: UserDTO): Promise<number> {
+        const user = await this.findUserByUsername(userDTO.username);
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        return await redisClient.DEL(`${user.username}:${user.role}`);
+    }
+
+    private async findUserByUsername(username: string | undefined): Promise<User | null> {
+
+        if (username == undefined) {
+            return null;
+        }
+
+        return await User.findOne({
+            where: {
+                username: username
+            }
+        });
     }
 
     private userToUserDTO(user: User): UserDTO {

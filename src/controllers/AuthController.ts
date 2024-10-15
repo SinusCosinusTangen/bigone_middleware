@@ -174,8 +174,45 @@ class AuthController {
                 });
             }
         } catch (error) {
-            res.status(500).json({ message: 'An error occurred while validating the user.' });
-            throw error;
+            if (error instanceof NotFoundException) {
+                res.status(404).json({
+                    status: ApiConstant.NOT_FOUND,
+                    message: ApiConstant.NOT_FOUND_MESSAGE,
+                    data: "USER NOT FOUND"
+                });
+            } else {
+                res.status(500).json({ message: 'An error occurred while deleting the user.' });
+            }
+        }
+    }
+
+    public async logoutUser(req: Request, res: Response) {
+        const requestData: UserRequest = req.body;
+        try {
+            const logoutUser = await this.authService.logoutUser(requestData);
+            if (logoutUser == 1) {
+                res.status(200).json({
+                    status: ApiConstant.OK,
+                    message: ApiConstant.OK_MESSAGE,
+                    data: "LOGOUT"
+                });
+            } else {
+                res.status(401).json({
+                    status: ApiConstant.UNAUTHORIZED,
+                    message: ApiConstant.UNAUTHORIZED_MESSAGE,
+                    data: "USER NOT LOGIN"
+                });
+            }
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                res.status(404).json({
+                    status: ApiConstant.NOT_FOUND,
+                    message: ApiConstant.NOT_FOUND_MESSAGE,
+                    data: "USER NOT FOUND"
+                });
+            } else {
+                res.status(500).json({ message: 'An error occurred while logout user.' });
+            }
         }
     }
 }

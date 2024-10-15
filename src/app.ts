@@ -11,8 +11,11 @@ dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
+var cors = require('cors')
+
 app.use(json());
 app.use(urlencoded({ extended: true }));
+app.use(cors())
 
 app.use('/api/auth', router);
 app.use('/api/project', projectRouter);
