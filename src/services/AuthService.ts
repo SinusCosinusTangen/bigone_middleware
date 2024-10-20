@@ -165,9 +165,15 @@ export class AuthService implements IAuthService {
 
         const token = jwt.sign(payload, secret, { expiresIn: '30m' });
 
-        await redisClient.SET(`${user.username}:${user.role}`, token.toString(), {
-            EX: 30 * 60,
-        });
+        try {
+            const reply = await redisClient.RPUSH(`${user.username}:${user.role}`, token);
+            console.log('Token stored successfully:', reply);
+
+            const expireReply = await redisClient.EXPIRE(`${user.username}:${user.role}`, 30 * 60);
+            console.log('Expiration set successfully:', expireReply);
+        } catch (err) {
+            console.error('Error:', err);
+        }
 
         return token;
     }
@@ -179,10 +185,15 @@ export class AuthService implements IAuthService {
             throw new NotFoundException('User not found');
         }
 
-        const token = await redisClient.get(`${user.username}:${user.role}`);
+        const tokens = await redisClient.LRANGE(`${user.username}:${user.role}`, 0, -1);
 
-        if (userDTO.token === token) {
+        if (userDTO.token && userDTO.token.includes(userDTO.token)) {
             userDTO.role = user.role;
+            const tokenToRemove = userDTO.token;
+
+            if (tokenToRemove) {
+                await redisClient.LREM(`${user.username}:${user.role}`, 1, tokenToRemove);
+            }
             userDTO.token = await this.generateJwtToken(userDTO);
             return userDTO;
         }
@@ -198,7 +209,16 @@ export class AuthService implements IAuthService {
             throw new NotFoundException('User not found');
         }
 
-        return await redisClient.DEL(`${user.username}:${user.role}`);
+        const tokenToRemove = userDTO.token;
+
+        var deleteCount = 0;
+        if (tokenToRemove) {
+            deleteCount = await redisClient.LREM(`${user.username}:${user.role}`, 1, tokenToRemove);
+        }
+
+        console.log(`Deleted ${deleteCount} instance(s) of token for user: ${user.username} with role: ${user.role}`);
+
+        return deleteCount;
     }
 
     private async findUserByUsername(username: string | undefined): Promise<User | null> {

@@ -6,12 +6,20 @@ import { json, urlencoded } from 'body-parser';
 import { connect as connectRedis } from './config/Redis';
 import projectRouter from './routes/ProjectRouter';
 
+const fs = require('fs');
+const https = require('https')
+
 dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
 var cors = require('cors')
+
+// const options = {
+//   key: fs.readFileSync(process.env.SSL_KEY_FILE),
+//   cert: fs.readFileSync(process.env.SSL_CRT_FILE),
+// };
 
 app.use(json());
 app.use(urlencoded({ extended: true }));
@@ -41,8 +49,8 @@ const startServer = async () => {
     await sequelize.sync();
     console.log('Connected to the database');
 
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+    https.createServer(app).listen(PORT, () => {
+      console.log(`HTTPS Server running on port ${PORT}`);
     });
   } catch (error) {
     console.error('Unable to connect to the database or Redis:', error);
