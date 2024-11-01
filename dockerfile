@@ -1,4 +1,4 @@
-FROM node:16-alpine
+FROM node
 
 # Create application directory and set permissions
 RUN mkdir -p /app && chown -R node:node /app
@@ -17,6 +17,9 @@ RUN npm install
 
 # Copy application source code after dependencies are installed
 COPY --chown=node:node . .
+
+# Copy .env
+COPY --chown=node:node .env ./src
 
 # Expose the correct port
 EXPOSE 8081

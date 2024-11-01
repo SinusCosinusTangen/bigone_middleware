@@ -7,7 +7,7 @@ import { connect as connectRedis } from './config/Redis';
 import projectRouter from './routes/ProjectRouter';
 
 const fs = require('fs');
-const https = require('https')
+const http = require('http')
 
 dotenv.config();
 
@@ -49,8 +49,8 @@ const startServer = async () => {
     await sequelize.sync();
     console.log('Connected to the database');
 
-    https.createServer(app).listen(PORT, () => {
-      console.log(`HTTPS Server running on port ${PORT}`);
+    http.createServer(app).listen(PORT, () => {
+      console.log(`HTTP Server running on port ${PORT}`);
     });
   } catch (error) {
     console.error('Unable to connect to the database or Redis:', error);
