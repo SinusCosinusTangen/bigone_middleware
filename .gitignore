@@ -40,3 +40,6 @@ temp/
 # Local keys
 keys/
 openssl-certs-2
+
+# Firebase
+firebase.json

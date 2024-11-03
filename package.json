@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "firebase-admin": "^12.7.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.11.3",
     "redis": "^4.7.0",

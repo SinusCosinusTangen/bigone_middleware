@@ -215,6 +215,52 @@ class AuthController {
             }
         }
     }
+
+    public async authWithGoogle(req: Request, res: Response) {
+        const requestData: UserRequest = req.body;
+        try {
+            const user = await this.authService.authWithGoogle(requestData);
+            res.status(200).json({
+                status: ApiConstant.OK,
+                message: ApiConstant.OK_MESSAGE,
+                data: user
+            });
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                res.status(404).json({
+                    status: ApiConstant.NOT_FOUND,
+                    message: ApiConstant.NOT_FOUND_MESSAGE,
+                    data: "USER NOT FOUND"
+                });
+            } else {
+                res.status(500).json({ message: 'An error occurred while logout user.' });
+            }
+        }
+    }
+
+    public async validateGoogleUser(req: Request, res: Response) {
+        const requestData: UserRequest = req.body;
+        try {
+            const validatedUser = await this.authService.validateGoogleUser(requestData);
+            if (validatedUser) {
+                res.status(200).json({
+                    status: ApiConstant.OK,
+                    message: ApiConstant.OK_MESSAGE,
+                    data: validatedUser
+                });
+            }
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                res.status(404).json({
+                    status: ApiConstant.NOT_FOUND,
+                    message: ApiConstant.NOT_FOUND_MESSAGE,
+                    data: "USER NOT FOUND"
+                });
+            } else {
+                res.status(500).json({ message: 'An error occurred while deleting the user.' });
+            }
+        }
+    }
 }
 
 export default new AuthController();

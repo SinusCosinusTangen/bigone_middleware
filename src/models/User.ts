@@ -5,10 +5,11 @@ interface UserAttributes {
     id: string;
     email: string;
     username: string;
-    password: string;
+    password?: string;
     role: string;
     loginMethod: string;
     lastLoggedOn?: Date;
+    firebaseUid?: string;
     createdDate: Date;
     lastModified: Date;
 }
@@ -19,10 +20,11 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
     public id!: string;
     public email!: string;
     public username!: string;
-    public password!: string;
+    public password?: string;
     public role!: string;
     public loginMethod!: string;
     public lastLoggedOn?: Date;
+    public firebaseUid?: string;
     public createdDate!: Date;
     public lastModified!: Date;
 }
@@ -44,7 +46,7 @@ User.init(
         },
         password: {
             type: DataTypes.STRING(100),
-            allowNull: false,
+            allowNull: true,
         },
         role: {
             type: DataTypes.STRING(50),
@@ -59,6 +61,11 @@ User.init(
             type: DataTypes.DATE,
             allowNull: true,
             field: "last_logged_on",
+        },
+        firebaseUid: {
+            type: DataTypes.STRING(30),
+            allowNull: true,
+            field: "firebase_uid",
         },
         createdDate: {
             type: DataTypes.DATE,

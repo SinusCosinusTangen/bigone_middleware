@@ -10,4 +10,6 @@ export interface IAuthService {
     deleteUser(request: UserRequest): Promise<void>;
     validateToken(user: UserDTO): Promise<UserDTO>;
     logoutUser(user: UserDTO): Promise<number>;
+    authWithGoogle(request: UserRequest): Promise<UserDTO>;
+    validateGoogleUser(request: UserDTO): Promise<UserDTO>;
 }
