@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import axios, { HttpStatusCode } from 'axios';
+import axios from 'axios';
 
-const CSharpApiBaseUrl = 'http://localhost:5190/api/Project'; // Adjust the URL and port as necessary
+const CSharpApiBaseUrl = process.env.PROJECT1_API_URL + '/Project';
 
 class ProjectController {
     public async getProjects(req: Request, res: Response) {
@@ -65,6 +65,7 @@ class ProjectController {
             res.status(response.status).json(response.data);
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
+                console.log(error);
                 res.status(error.response.status).json(error.response.data);
             } else {
                 console.log(error);

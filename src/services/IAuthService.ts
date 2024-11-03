@@ -8,5 +8,6 @@ export interface IAuthService {
     loginUser(request: AuthDTO): Promise<UserDTO>;
     updateUser(request: UserRequest): Promise<UserDTO>;
     deleteUser(request: UserRequest): Promise<void>;
-    validateToken(user: UserDTO): Promise<UserDTO>
+    validateToken(user: UserDTO): Promise<UserDTO>;
+    logoutUser(user: UserDTO): Promise<number>;
 }
