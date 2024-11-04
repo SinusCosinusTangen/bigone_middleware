@@ -19,3 +19,10 @@ export class NotFoundException extends Error {
         this.name = 'NotFoundException';
     }
 }
+
+export class ExpiredTokenException extends Error {
+    constructor(message: string = 'Token expired.') {
+        super(message);
+        this.name = 'ExpiredTokenException';
+    }
+}

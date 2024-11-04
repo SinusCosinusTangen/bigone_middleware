@@ -3,11 +3,13 @@ import jwt from 'jsonwebtoken';
 import { UserRequest, AuthDTO, UserDTO } from '../models/AuthDTO';
 import { CryptoDTO } from '../models/CryptoDTO';
 import { ICryptoService } from './ICryptoService';
-import { UserExistsException, WrongPasswordException, NotFoundException } from '../exceptions/exceptions';
+import { UserExistsException, WrongPasswordException, NotFoundException, ExpiredTokenException } from '../exceptions/exceptions';
 import { compareSync, hashSync } from 'bcryptjs';
 import { IAuthService } from './IAuthService';
 import { Op } from 'sequelize';
 import { redisClient } from '../config/Redis';
+import * as admin from 'firebase-admin';
+import { LoginMethodConstant, RoleConstant } from '../constants/ServiceConstant'
 
 export class AuthService implements IAuthService {
     private cryptoService: ICryptoService;
@@ -62,8 +64,8 @@ export class AuthService implements IAuthService {
             username: request.username,
             email: request.email,
             password: request.password ? hashSync(this.cryptoService.decryptMessage(request.password), 10) : "",
-            role: 'guest',
-            loginMethod: request.loginMethod || 'username/email',
+            role: RoleConstant.GUEST,
+            loginMethod: request.loginMethod || LoginMethodConstant.USERNAME_EMAIL,
             lastLoggedOn: new Date(),
             firebaseUid: request.firebaseUid,
             createdDate: new Date(),
@@ -83,12 +85,14 @@ export class AuthService implements IAuthService {
                             { email: request.usernameEmail }
                         ]
                     },
-                    { loginMethod: "username/email" }
+                    { loginMethod: LoginMethodConstant.USERNAME_EMAIL }
                 ]
             }
         });
 
-        if (!user || !user.password) {
+        if (request.loginMethod === LoginMethodConstant.GOOGLE) {
+            throw new WrongPasswordException();
+        } else if (!user || !user.password) {
             throw new NotFoundException();
         }
 
@@ -117,13 +121,13 @@ export class AuthService implements IAuthService {
         });
 
         if (!user) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundException();
         }
 
         if (request.password && user.password) {
             const decryptedPassword = this.cryptoService.decryptMessage(request.password);
             if (!compareSync(decryptedPassword, user.password)) {
-                throw new WrongPasswordException('Provided password is incorrect');
+                throw new WrongPasswordException();
             }
         }
 
@@ -149,13 +153,13 @@ export class AuthService implements IAuthService {
         });
 
         if (!user) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundException();
         }
 
         if (request.password && user.password) {
             const decryptedPassword = this.cryptoService.decryptMessage(request.password);
             if (!compareSync(decryptedPassword, user.password)) {
-                throw new WrongPasswordException('Provided password is incorrect');
+                throw new WrongPasswordException();
             }
         }
 
@@ -172,7 +176,7 @@ export class AuthService implements IAuthService {
 
         let token = jwt.sign(payload, secret, { expiresIn: '30m' });
 
-        if (user.loginMethod === 'Google' && (user as UserDTO).token) {
+        if (user.loginMethod === LoginMethodConstant.GOOGLE && (user as UserDTO).token) {
             token = (user as UserDTO).token ?? jwt.sign(payload, secret, { expiresIn: '30m' });
         }
 
@@ -193,28 +197,37 @@ export class AuthService implements IAuthService {
         const user = await this.findUserByUsername(userDTO.username);
 
         if (!user) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundException();
         }
 
         const tokens = await redisClient.LRANGE(`${user.username}:${user.role}`, 0, -1);
 
         if (userDTO.token && tokens.includes(userDTO.token)) {
+            userDTO.loginMethod = user.loginMethod;
             userDTO.role = user.role;
+
+            if (user.loginMethod === LoginMethodConstant.GOOGLE) {
+                var res = await admin.auth().verifyIdToken(userDTO.token);
+
+                if (res.uid != user.firebaseUid) {
+                    throw new ExpiredTokenException();
+                }
+            }
+
             await redisClient.LREM(`${user.username}:${user.role}`, 1, userDTO.token);
             userDTO.token = await this.generateJwtToken(userDTO);
 
             return userDTO;
+        } else {
+            throw new ExpiredTokenException();
         }
-
-        userDTO.token = "EXPIRED";
-        return userDTO;
     }
 
     public async logoutUser(userDTO: UserDTO): Promise<number> {
         const user = await this.findUserByUsername(userDTO.username);
 
         if (!user) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundException();
         }
 
         const tokenToRemove = userDTO.token;
@@ -223,8 +236,6 @@ export class AuthService implements IAuthService {
         if (tokenToRemove) {
             deleteCount = await redisClient.LREM(`${user.username}:${user.role}`, 1, tokenToRemove);
         }
-
-        console.log(`Deleted ${deleteCount} instance(s) of token for user: ${user.username} with role: ${user.role}`);
 
         return deleteCount;
     }
@@ -245,9 +256,10 @@ export class AuthService implements IAuthService {
         } else {
             userDTO = this.userToUserDTO(user);
             userDTO.token = request.token;
-            user.lastLoggedOn = new Date();
-            await user.save();
             token = await this.generateJwtToken(userDTO);
+            user.lastLoggedOn = new Date();
+            user.loginMethod = LoginMethodConstant.GOOGLE;
+            await user.save();
         }
 
         userDTO.token = token;

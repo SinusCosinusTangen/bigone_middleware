@@ -4,9 +4,10 @@ import { AuthService } from '../services/AuthService';
 import { ApiConstant } from '../constants/ApiConstant';
 import { UserRequest, AuthDTO, UserDTO } from '../models/AuthDTO';
 import { CryptoDTO } from '../models/CryptoDTO';
-import { UserExistsException, WrongPasswordException, NotFoundException } from '../exceptions/exceptions';
+import { UserExistsException, WrongPasswordException, NotFoundException, ExpiredTokenException } from '../exceptions/exceptions';
 import { ICryptoService } from '../services/ICryptoService';
 import { CryptoService } from '../services/CryptoService';
+import { TokenExpiredError } from 'jsonwebtoken';
 
 class AuthController {
     private cryptoService: ICryptoService;
@@ -160,7 +161,7 @@ class AuthController {
         const requestData: UserRequest = req.body;
         try {
             const validatedUser = await this.authService.validateToken(requestData);
-            if (validatedUser.token !== "EXPIRED") {
+            if (validatedUser.token) {
                 res.status(200).json({
                     status: ApiConstant.OK,
                     message: ApiConstant.OK_MESSAGE,
@@ -179,6 +180,12 @@ class AuthController {
                     status: ApiConstant.NOT_FOUND,
                     message: ApiConstant.NOT_FOUND_MESSAGE,
                     data: "USER NOT FOUND"
+                });
+            } else if (error instanceof ExpiredTokenException) {
+                res.status(401).json({
+                    status: ApiConstant.UNAUTHORIZED,
+                    message: ApiConstant.UNAUTHORIZED_MESSAGE,
+                    data: "TOKEN EXPIRED"
                 });
             } else {
                 res.status(500).json({ message: 'An error occurred while deleting the user.' });
@@ -233,7 +240,7 @@ class AuthController {
                     data: "USER NOT FOUND"
                 });
             } else {
-                res.status(500).json({ message: 'An error occurred while logout user.' });
+                res.status(500).json({ message: 'An error occurred while authenticating user.' });
             }
         }
     }
@@ -257,7 +264,7 @@ class AuthController {
                     data: "USER NOT FOUND"
                 });
             } else {
-                res.status(500).json({ message: 'An error occurred while deleting the user.' });
+                res.status(500).json({ message: 'An error occurred while validating the user.' });
             }
         }
     }

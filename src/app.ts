@@ -5,6 +5,7 @@ import sequelize from './config/Database';
 import { json, urlencoded } from 'body-parser';
 import { connect as connectRedis } from './config/Redis';
 import projectRouter from './routes/ProjectRouter';
+import { initializeFirebase } from './config/Firebase';
 
 const fs = require('fs');
 const http = require('http')
@@ -43,6 +44,9 @@ app.use((req: Request, res: Response) => {
 
 const startServer = async () => {
   try {
+    initializeFirebase();
+    console.log('Connected to Firebase');
+
     await connectRedis();
     console.log('Connected to Redis');
 
