@@ -203,6 +203,7 @@ export class AuthService implements IAuthService {
         const tokens = await redisClient.LRANGE(`${user.username}:${user.role}`, 0, -1);
 
         if (userDTO.token && tokens.includes(userDTO.token)) {
+            userDTO.uid = user.id;
             userDTO.loginMethod = user.loginMethod;
             userDTO.role = user.role;
 
@@ -296,6 +297,7 @@ export class AuthService implements IAuthService {
 
     private userToUserDTO(user: User): UserDTO {
         return {
+            uid: user.id,
             username: user.username,
             email: user.email,
             role: user.role,

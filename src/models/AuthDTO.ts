@@ -15,6 +15,7 @@ export interface AuthDTO {
 }
 
 export interface UserDTO {
+    uid?: string;
     username?: string;
     email?: string;
     role?: string;

@@ -7,7 +7,6 @@ import { CryptoDTO } from '../models/CryptoDTO';
 import { UserExistsException, WrongPasswordException, NotFoundException, ExpiredTokenException } from '../exceptions/exceptions';
 import { ICryptoService } from '../services/ICryptoService';
 import { CryptoService } from '../services/CryptoService';
-import { TokenExpiredError } from 'jsonwebtoken';
 
 class AuthController {
     private cryptoService: ICryptoService;
